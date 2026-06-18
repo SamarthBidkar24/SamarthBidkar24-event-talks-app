@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="description" content="A premium real-time dashboard for exploring and sharing Google Cloud BigQuery release notes.">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <!-- Sidebar or Header -->
+        <header class="main-header">
+            <div class="header-brand">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>BigQuery <span>Release Notes</span></h1>
+                    <p class="brand-tagline">Real-time update hub & sharing platform</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div id="connection-status" class="status-indicator">
+                    <span class="status-dot green"></span>
+                    <span class="status-text">Connected</span>
+                </div>
+                
+                <button id="refresh-btn" class="btn btn-primary btn-refresh" aria-label="Refresh release notes">
+                    <svg class="icon spinner-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+
+                <button id="theme-toggle" class="btn btn-icon" aria-label="Toggle theme">
+                    <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C14.76 17 17 14.76 17 12C17 9.24 14.76 7 12 7ZM12 15C10.35 15 9 13.65 9 12C9 10.35 10.35 9 12 9C13.65 9 15 10.35 15 12C15 13.65 13.65 15 12 15ZM12 2V4M12 20V22M4.93 4.93L6.34 6.34M17.66 17.66L19.07 19.07M2 12H4M20 12H22M6.34 17.66L4.93 19.07M19.07 4.93L17.66 6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                        <path d="M12.3 22C6.88 22 2.5 17.62 2.5 12.2C2.5 7.91 5.25 4.19 9.38 2.8C9.92 2.62 10.46 3.1 10.32 3.66C9.69 6.2 10.15 8.94 11.64 11.14C13.13 13.34 15.48 14.76 18.06 15.11C18.63 15.19 18.91 15.85 18.5 16.24C16.96 17.7 15.01 18.72 12.92 19.16C12.72 19.2 12.51 19.22 12.3 19.22ZM9.03 4.79C6.01 6.33 4.5 9.49 4.5 12.2C4.5 16.51 8 20 12.3 20C13.75 20 15.18 19.61 16.43 18.89C13.36 18.29 10.74 16.27 9.36 13.33C7.99 10.39 8.04 7.23 9.03 4.79Z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Section -->
+        <section class="stats-container">
+            <div class="stat-card" data-type="all">
+                <span class="stat-value" id="stat-total">0</span>
+                <span class="stat-label">Total Updates</span>
+            </div>
+            <div class="stat-card" data-type="Feature">
+                <span class="stat-value" id="stat-features">0</span>
+                <span class="stat-label">Features 🚀</span>
+            </div>
+            <div class="stat-card" data-type="Announcement">
+                <span class="stat-value" id="stat-announcements">0</span>
+                <span class="stat-label">Announcements 📢</span>
+            </div>
+            <div class="stat-card" data-type="Breaking">
+                <span class="stat-value" id="stat-breaking">0</span>
+                <span class="stat-label">Breaking ⚠️</span>
+            </div>
+            <div class="stat-card" data-type="Issue">
+                <span class="stat-value" id="stat-issues">0</span>
+                <span class="stat-label">Issues 🐛</span>
+            </div>
+        </section>
+
+        <!-- Search and Filters -->
+        <section class="filter-controls">
+            <div class="search-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3C5.91 3 3 5.91 3 9.5C3 13.09 5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5C5 7.01 7.01 5 9.5 5C11.99 5 14 7.01 14 9.5C14 11.99 11.99 14 9.5 14Z" fill="currentColor"/>
+                </svg>
+                <input type="text" id="search-input" placeholder="Search release notes by keywords..." aria-label="Search release notes">
+            </div>
+
+            <div class="filter-groups">
+                <div class="filter-pills" id="type-filters">
+                    <button class="filter-pill active" data-filter="all">All</button>
+                    <button class="filter-pill" data-filter="Feature">Features</button>
+                    <button class="filter-pill" data-filter="Announcement">Announcements</button>
+                    <button class="filter-pill" data-filter="Breaking">Breaking</button>
+                    <button class="filter-pill" data-filter="Issue">Issues</button>
+                    <button class="filter-pill" data-filter="Change">Changes</button>
+                </div>
+                
+                <div class="sort-select-wrapper">
+                    <select id="sort-select" aria-label="Sort updates">
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Area -->
+        <main class="content-grid" id="notes-container">
+            <!-- Loading state -->
+            <div class="loading-state" id="loading-spinner">
+                <div class="pulse-ring"></div>
+                <div class="spinner-dual"></div>
+                <p>Fetching BigQuery release notes...</p>
+            </div>
+            
+            <!-- Notes cards will be injected here -->
+        </main>
+        
+        <footer class="app-footer">
+            <p>BigQuery Release Notes Explorer &bull; Built with Python Flask &amp; Vanilla JS</p>
+            <p id="cache-time-indicator" class="cache-time"></p>
+        </footer>
+    </div>
+
+    <!-- TWEET COMPOSER MODAL -->
+    <div id="tweet-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Compose Tweet</h2>
+                <button id="close-modal-btn" class="btn btn-icon modal-close" aria-label="Close modal">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tweet-preview-section">
+                    <label for="tweet-textarea">Customize your post message:</label>
+                    <textarea id="tweet-textarea" rows="6" maxlength="500" placeholder="What's happening?"></textarea>
+                    
+                    <div class="character-counter-row">
+                        <span id="char-status-text">Draft fits the X limit</span>
+                        <span id="char-counter">0 / 280</span>
+                    </div>
+                </div>
+
+                <div class="quick-templates">
+                    <label>Choose a template style:</label>
+                    <div class="template-chips">
+                        <button class="template-chip active" data-template="casual">💡 Summary</button>
+                        <button class="template-chip" data-template="professional">📢 Announcement</button>
+                        <button class="template-chip" data-template="feature">🚀 Tech Focus</button>
+                    </div>
+                </div>
+
+                <div class="source-reference">
+                    <span class="source-label">Source Release Note:</span>
+                    <blockquote id="modal-note-preview"></blockquote>
+                    <span id="modal-note-date" class="modal-date"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="copy-tweet-btn" class="btn btn-secondary">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                    </svg>
+                    <span>Copy Text</span>
+                </button>
+                <button id="submit-tweet-btn" class="btn btn-primary btn-tweet">
+                    <!-- Custom SVG representing X / Twitter bird or simple logo -->
+                    <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>Post on X</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
