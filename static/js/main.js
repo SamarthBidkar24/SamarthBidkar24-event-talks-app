@@ -13,6 +13,7 @@ let appState = {
 const notesContainer = document.getElementById('notes-container');
 const searchInput = document.getElementById('search-input');
 const sortSelect = document.getElementById('sort-select');
+const exportCsvBtn = document.getElementById('export-csv-btn');
 const typeFilters = document.getElementById('type-filters');
 const refreshBtn = document.getElementById('refresh-btn');
 const themeToggle = document.getElementById('theme-toggle');
@@ -197,6 +198,11 @@ function setupEventListeners() {
         applyFiltersAndRender();
     });
     
+    // Export CSV Button
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportFilteredToCSV);
+    }
+    
     // Type Filters
     typeFilters.addEventListener('click', (e) => {
         if (e.target.classList.contains('filter-pill')) {
@@ -322,6 +328,7 @@ function applyFiltersAndRender() {
         results.sort((a, b) => new Date(a.updated || a.date) - new Date(b.updated || b.date));
     }
     
+    appState.filteredNotes = results;
     renderNotes(results);
 }
 
@@ -375,14 +382,29 @@ function renderNotes(notes) {
                         </svg>
                     </a>
                 ` : ''}
+                <button class="btn btn-secondary btn-sm btn-copy-trigger" style="margin-left: auto;" aria-label="Copy to Clipboard">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; margin-right: 0.2rem;">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>Copy</span>
+                </button>
                 <button class="btn btn-secondary btn-sm btn-tweet-trigger" aria-label="Compose tweet for this release note">
                     <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px; margin-right: 0.2rem;">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                     <span>Tweet</span>
                 </button>
+            </div>
         `;
         
+        // Copy Trigger click event
+        card.querySelector('.btn-copy-trigger').addEventListener('click', () => {
+            const copyText = `[BigQuery ${formattedType}] ${note.date}\n\n${note.text_content}\n\nRead more: ${note.link || 'https://cloud.google.com/bigquery/docs/release-notes'}`;
+            navigator.clipboard.writeText(copyText);
+            showToast('Copied release note details!', 'success');
+        });
+
         // Tweet Trigger click event
         card.querySelector('.btn-tweet-trigger').addEventListener('click', () => {
             openTweetModal(note);
@@ -540,4 +562,57 @@ function showToast(message, type = 'info') {
             setTimeout(() => toast.remove(), 300);
         }
     }, 4000);
+}
+
+// CSV Export Logic
+function exportFilteredToCSV() {
+    const notesToExport = appState.filteredNotes || [];
+    if (notesToExport.length === 0) {
+        showToast('No notes matching current filters to export.', 'error');
+        return;
+    }
+    
+    // CSV headers
+    const headers = ['Date', 'Type', 'Description', 'Link'];
+    
+    // Escape cell helper to handle double quotes, commas, and newlines
+    const escapeCSV = (text) => {
+        if (!text) return '';
+        const stringified = String(text);
+        const escaped = stringified.replace(/"/g, '""');
+        if (escaped.includes(',') || escaped.includes('\n') || escaped.includes('"')) {
+            return `"${escaped}"`;
+        }
+        return escaped;
+    };
+    
+    const csvRows = [
+        headers.join(','),
+        ...notesToExport.map(note => [
+            escapeCSV(note.date),
+            escapeCSV(note.type),
+            escapeCSV(note.text_content),
+            escapeCSV(note.link)
+        ].join(','))
+    ];
+    
+    const csvContent = csvRows.join('\n');
+    
+    // Create download blob
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    // Dynamic file name based on current filters and date
+    const filterText = appState.activeFilter === 'all' ? 'all' : appState.activeFilter.toLowerCase();
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bigquery_releases_${filterText}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`Exported ${notesToExport.length} release notes to CSV!`, 'success');
 }
