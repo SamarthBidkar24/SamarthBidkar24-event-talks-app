@@ -16,7 +16,7 @@ const sortSelect = document.getElementById('sort-select');
 const exportCsvBtn = document.getElementById('export-csv-btn');
 const typeFilters = document.getElementById('type-filters');
 const refreshBtn = document.getElementById('refresh-btn');
-const themeToggle = document.getElementById('theme-toggle');
+const themeCheckbox = document.getElementById('theme-checkbox');
 const connectionStatus = document.getElementById('connection-status');
 const cacheTimeIndicator = document.getElementById('cache-time-indicator');
 
@@ -53,23 +53,11 @@ function initTheme() {
     if (savedTheme === 'light') {
         document.body.classList.remove('dark-mode');
         document.body.classList.add('light-mode');
-        toggleThemeIcons('light');
+        if (themeCheckbox) themeCheckbox.checked = false;
     } else {
         document.body.classList.add('dark-mode');
         document.body.classList.remove('light-mode');
-        toggleThemeIcons('dark');
-    }
-}
-
-function toggleThemeIcons(theme) {
-    const sunIcon = themeToggle.querySelector('.icon-sun');
-    const moonIcon = themeToggle.querySelector('.icon-moon');
-    if (theme === 'light') {
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
-    } else {
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
+        if (themeCheckbox) themeCheckbox.checked = true;
     }
 }
 
@@ -238,23 +226,22 @@ function setupEventListeners() {
         fetchReleaseNotes(true);
     });
     
-    // Theme Toggle
-    themeToggle.addEventListener('click', () => {
-        const isDark = document.body.classList.contains('dark-mode');
-        if (isDark) {
-            document.body.classList.remove('dark-mode');
-            document.body.classList.add('light-mode');
-            localStorage.setItem('theme', 'light');
-            toggleThemeIcons('light');
-            showToast('Switched to light theme', 'info');
-        } else {
-            document.body.classList.add('dark-mode');
-            document.body.classList.remove('light-mode');
-            localStorage.setItem('theme', 'dark');
-            toggleThemeIcons('dark');
-            showToast('Switched to dark theme', 'info');
-        }
-    });
+    // Theme Switch Slider
+    if (themeCheckbox) {
+        themeCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.add('dark-mode');
+                document.body.classList.remove('light-mode');
+                localStorage.setItem('theme', 'dark');
+                showToast('Switched to dark theme', 'info');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+                localStorage.setItem('theme', 'light');
+                showToast('Switched to light theme', 'info');
+            }
+        });
+    }
 
     // Close Modal Events
     closeModalBtn.addEventListener('click', closeTweetModal);
